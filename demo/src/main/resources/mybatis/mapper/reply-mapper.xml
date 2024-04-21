@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dao.IReplyDao">
+	
+    <select id="getReplyList" resultType="dto.ReplyDto" >
+     	SELECT * FROM tbl_notice_reply WHERE nno = #{nno}
+    </select>
+
+	<insert id="saveReply" parameterType="dto.ReplyDto" >
+		INSERT INTO tbl_notice_reply (nno, content, writer)
+		VALUES (#{reply.nno}, #{reply.content}, #{reply.writer})
+	</insert>
+	
+</mapper>

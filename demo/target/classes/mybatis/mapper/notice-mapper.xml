@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dao.INoticeDao">
+	
+    <select id="getNoticeList" resultType="dto.NoticeDto" >
+     	SELECT * FROM tbl_notice
+    </select>
+
+	<insert id="saveNotice" parameterType="dto.NoticeDto" >
+		INSERT INTO tbl_notice (title, content, writer)
+		VALUES (#{notice.title}, #{notice.content}, #{notice.writer})
+	</insert>
+	
+	<select id="getNotice" resultType="dto.NoticeDto" >
+		SELECT * FROM tbl_notice WHERE nno = #{nno}
+	</select>
+</mapper>
