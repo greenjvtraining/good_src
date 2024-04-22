@@ -1,0 +1,52 @@
+-- notice board
+CREATE TABLE tbl_notice(
+	nno INT AUTO_INCREMENT PRIMARY KEY,
+	title VARCHAR(50),
+	content VARCHAR(1000),
+	writer VARCHAR(20),
+	regdate TIMESTAMP DEFAULT NOW()
+);
+
+INSERT INTO tbl_notice VALUES(NULL, 'test1', 'test1...', 'admin', DEFAULT);
+
+-- 공지사항 게시글 증식하기 
+INSERT INTO tbl_notice(title, content, writer)
+(SELECT title, content, writer FROM tbl_notice);
+SELECT * FROM tbl_notice;
+
+UPDATE tbl_notice SET regdate = '2024-04-20 11:11:34' WHERE nno = 1;
+
+DROP TABLE tbl_notice_reply;
+CREATE TABLE tbl_notice_reply(
+	rno INT AUTO_INCREMENT PRIMARY KEY,
+	nno int,
+	content VARCHAR(100),
+	writer VARCHAR(20),
+	regdate TIMESTAMP DEFAULT NOW(),
+	FOREIGN KEY(nno) REFERENCES tbl_notice(nno),
+	FOREIGN KEY(writer) REFERENCES tbl_member(id)
+);
+
+INSERT INTO tbl_notice_reply VALUES (NULL, 1, 'good~~~', 'user01', DEFAULT);
+INSERT INTO tbl_notice_reply VALUES (NULL, 2, 'good~~~', 'user02', DEFAULT);
+INSERT INTO tbl_notice_reply VALUES (NULL, 2, 'good~~~', 'user01', DEFAULT);
+INSERT INTO tbl_notice_reply VALUES (NULL, 3, 'good~~~', 'user01', DEFAULT);
+INSERT INTO tbl_notice_reply VALUES (NULL, 4, 'good~~~', 'user02', DEFAULT);
+INSERT INTO tbl_notice_reply VALUES (NULL, 6, 'good~~~', 'user01', DEFAULT);
+INSERT INTO tbl_notice_reply VALUES (NULL, 9, 'good~~~', 'user02', DEFAULT);
+INSERT INTO tbl_notice_reply VALUES (NULL, 10, 'good~~~', 'user02', DEFAULT);
+INSERT INTO tbl_notice_reply VALUES (NULL, 13, 'good~~~', 'user01', DEFAULT);
+SELECT * FROM tbl_notice_reply;
+SELECT * FROM tbl_notice;
+
+-- 댓글 수 포함한 공지사항 목록 
+SELECT n.title, n.content, n.writer, n.regdate, IFNULL(r.reply_cnt, 0) replyCnt
+FROM tbl_notice n 
+LEFT JOIN 
+(SELECT nno, COUNT(*) reply_cnt FROM tbl_notice_reply
+GROUP BY nno) r
+ON n.nno = r.nno;
+
+-- 게시글 별 댓글 수 
+SELECT nno, COUNT(*) reply_cnt FROM tbl_notice_reply
+GROUP BY nno;
