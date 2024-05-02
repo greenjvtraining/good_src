@@ -36,7 +36,7 @@ public class ContentValidator implements Validator{
 //			errors.rejectValue("content", "trouble");
 //		}
 		
-		ValidationUtils.rejectIfEmptyOrWhitespace(errors, "content", dto.getContent());
+		ValidationUtils.rejectIfEmptyOrWhitespace(errors, "content", "content is empty");
 		
 	}
 
