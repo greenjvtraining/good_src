@@ -8,7 +8,7 @@
 <title>Insert title here</title>
 </head>
 <body>
-<h1>List Page - <span>${cnt }</span></h1>
+<h1>List Page - <span>${totalCnt }</span></h1>
 <hr>
 <table border="1">
 	<thead>
@@ -37,15 +37,18 @@
 	<!-- 페이지 번호에 따라 페이지 블록의 시작 번호가 결정된다. 최초에는 페이지번호가 무조건 1 -->
 	
 	
-	<c:set var="start" value="${Math.floor((pageNum-1)/5)*5 + 1 }" />
-	<c:set var="end" value="${start + 4 }" />
-	<c:set var="realEnd" value="${Math.ceil(cnt/10) }" />
 	
-	<span><a href="">[이전]</a></span>&nbsp;&nbsp;
-	<c:forEach var="i" begin="${start }" end="${end }"> <!--  -->
+	<c:if test="${start ne 1 }" >
+		<span><a href="list4?pageNum=${start - 5 }">[이전]</a></span>&nbsp;&nbsp;
+	</c:if>
+	<c:forEach var="i" begin="${start }" end="${(end < realEnd) ? end : realEnd }"> <!--  -->
 		<a href="list4?pageNum=${i }">${i}</a> &nbsp;&nbsp;
 	</c:forEach>&nbsp;&nbsp;
-	<span><a href="list4?pageNum=${end + 1 }">[다음]</a></span>
+	<c:if test="${end < realEnd }" >
+		<span><a href="list4?pageNum=${end + 1 }">[다음]</a></span>
+	</c:if>
+	
+	
 	
 	<div>start : ${start }</div>
 	<div>end : ${end }</div>
