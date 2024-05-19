@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+
+</head>
+<body>
+<h1>Result Page</h1>
+<hr>
+<div>
+	<table border="1">
+		<thead>
+			<tr>
+				<th>bno</th><th>content</th><th>img</th><th>download</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr th:each="board : ${list}">
+				<td>[[${board.bno}]]</td>
+				<td><a th:href="@{|/board/detail?bno=${board.bno}|}">[[${board.comment}]]</a></td>
+				<td><img th:src="@{|/images/${board.thumbnailName}|}" alt=""/></td>
+				<td><a th:href="@{|/board/download?bno=${board.bno}|}">다운로드</a></td>
+			</tr>
+		</tbody>
+	
+	</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Detail Page</h1>
+<hr>
+<div>
+	<div>[[${board.bno}]]</div>
+	<div>
+		<img th:src="@{|/images/${board.newName}|}" alt=""/>
+	</div>
+	<hr>
+	<div>[[${board.comment}]]</div>
+	
+</div>
+</body>
+</html>

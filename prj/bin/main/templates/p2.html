@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script src="https://code.jquery.com/jquery-3.7.1.js"
+	integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+	crossorigin="anonymous"></script>
+</head>
+<body>
+	<h1>P2</h1>
+	<hr>
+	<div>
+		<img th:src="${imagePath}" width="50px" />
+	</div>
+	<div>
+		<form name="frm">
+			<input type="text" name="comment" /><br> <input type="file"
+				name="file" /><br> <input type="button" value="Regist"
+				onclick="submitForm2()" />
+		</form>
+	</div>
+	<div id="demo"></div>
+	<script th:inline="javascript">
+		function submitForm() {
+			alert("submit....");
+			var form = document.forms['frm'];
+			var formData = new FormData(form);
+			$.ajax({
+				type : "post",
+				enctype : 'multipart/form-data',
+				url : /*[[@{/board/regist1}]]*/{},
+				data : formData,
+				dataType : 'json',
+				processData : false,
+				contentType : false,
+				cache : false,
+				success : function(data) {
+					console.log("success : ", data);
+				},
+				error : function(e) {
+					console.log("error : ", e);
+				}
+			});
+		}
+
+		function submitForm2() {
+			alert("submit2....");
+			var form = document.forms['frm'];
+			var formData = new FormData(form);
+			const xhttp = new XMLHttpRequest();
+			xhttp.onload = function() {
+				document.getElementById("demo").innerHTML = this.responseText;
+			}
+			xhttp.open("POST", /*[[@{/board/regist1}]]*/{});
+			//xhttp.setRequestHeader("Content-type", "multipart/form-data");
+			xhttp.send(formData);
+		}
+	</script>
+</body>
+</html>

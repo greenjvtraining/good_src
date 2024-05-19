@@ -1,0 +1,8 @@
+-- green board
+DROP TABLE board;
+CREATE TABLE board(
+	bno INT AUTO_INCREMENT PRIMARY KEY,
+	COMMENT VARCHAR(100) NOT NULL,
+	origin_name VARCHAR(50),
+	new_name VARCHAR(100)
+);

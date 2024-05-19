@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>P1</h1>
+<hr>
+<div>
+	<img th:src="${imagePath}" width="50px"/>
+</div>
+<div>
+	<form action="/board/regist" method="post" enctype="multipart/form-data">
+		<input type="text" name="comment" /><br>
+		<input type="file" name="file" /><br>
+		<input type="submit" value="Regist" />
+	</form>
+</div>
+</body>
+</html>

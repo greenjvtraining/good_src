@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.prj.dao.BoardMapper">
+	<insert id="insert">
+		INSERT INTO board (comment, origin_name, new_name, thumbnail_name) VALUES (#{board.comment}, #{board.originName}, #{board.newName}, #{board.thumbnailName})
+	</insert>
+	
+	<select id="getList" resultType="com.example.prj.dto.BoardDto">
+		SELECT * FROM board
+	</select>
+	
+	<select id="getBoard" resultType="com.example.prj.dto.BoardDto">
+		SELECT * FROM board WHERE bno = #{bno}
+	</select>
+</mapper>
