@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+	#regform{
+		display: none;
+	}
+</style>
+</head>
+<body>
+<p th:if="${session.username ne null}">[[${session.username}]]&nbsp;&nbsp;<span><a href="/user/logout">로그아웃</a></span></p>
+<p th:if="${session.username eq null}"><a href="/user/loginForm">[[${'로그인'}]]</a></p>
+<h1>상세페이지</h1>
+<hr>
+<table border="1">
+	<thead>
+		<tr>
+			<th>bno</th><th>title</th><th>content</th><th>writer</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>[[${board.bno}]]</td>
+			<td>[[${board.title}]]</td>
+			<td>[[${board.content}]]</td>
+			<td>[[${board.user.username}]]</td>
+		</tr>
+	</tbody>
+</table>
+<hr>
+<button id="toggleButton" onclick="f()">Show 댓글 Form</button>
+<div id="regform">
+	<input type="text" id="writer" ><br>
+	<input type="text" id="comment" ><br>
+	<input type="button" id="btn_regReply" value="댓글등록" onclick="regReply()">
+</div>
+<hr>
+<h3>---- 댓글 목록 ----</h3>
+<div id="demo"></div>
+
+<script>
+	loadReply();
+	
+	const regform = document.querySelector("#regform");
+	function f(){
+		if (regform.style.display === 'none' || regform.style.display === '') {
+            regform.style.display = 'block';
+            this.textContent = 'Hide Form'; // 버튼 텍스트 변경
+        } else {
+            regform.style.display = 'none';
+            this.textContent = 'Show Form'; // 버튼 텍스트 변경
+        }
+	}
+
+	function loadReply(){
+		const xhttp = new XMLHttpRequest();
+		xhttp.onload = function() {
+		  document.getElementById("demo").innerHTML = this.responseText;
+		}
+		xhttp.open("GET", "/reply/getList?bno=" + [[${board.bno}]], true);
+		//xhttp.setRequestHeader("Content-type", "application/json");
+		xhttp.send();
+	}
+	
+	function regReply() {
+		const writer = document.querySelector("#writer");
+		const comment = document.querySelector("#comment");
+		
+		const obj = {
+				writer : writer.value,
+				comment : comment.value,
+				bno : [[${board.bno}]]
+		}
+		
+		console.log(obj);
+		
+		const xhttp = new XMLHttpRequest();
+		xhttp.onload = function() {
+		  document.getElementById("demo").innerHTML = this.responseText;
+		}
+		xhttp.open("POST", "/reply/regist", true);
+		xhttp.setRequestHeader("Content-type", "application/json");
+		xhttp.send(JSON.stringify(obj));
+	}
+</script>
+</body>
+</html>

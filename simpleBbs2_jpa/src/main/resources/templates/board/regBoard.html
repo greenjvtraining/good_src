@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<p th:if="${session.username ne null}">[[${session.username}]]&nbsp;&nbsp;<span><a href="/user/logout">로그아웃</a></span></p>
+<p th:if="${session.username eq null}"><a href="/user/loginForm">[[${'로그인'}]]</a></p>
+<h1>Reg Board</h1>
+<hr>
+<div>
+	<form action="/board/reg" method="post">
+		title : <input type="text" name="title"><br>
+		content : <input type="text" name="content"><br>
+		writer : <input type="text" name="writer" th:value="${session.username}"><br>
+		
+		<input type="submit" value="등록">
+	</form>
+</div>
+</body>
+</html>
