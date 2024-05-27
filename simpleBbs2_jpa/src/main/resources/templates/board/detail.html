@@ -14,6 +14,7 @@
 <p th:if="${session.username eq null}"><a href="/user/loginForm">[[${'로그인'}]]</a></p>
 <h1>상세페이지</h1>
 <hr>
+<a th:href="@{/board/delete/{bno}(bno=${board.bno})}">게시글 삭제하기</a>
 <table border="1">
 	<thead>
 		<tr>
