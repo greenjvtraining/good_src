@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Index Page</h1>
+<hr>
+<button onclick="f1()">test</button>
+<button onclick="f2()">test2</button>
+<div id="demo"></div>
+<script>
+	function f1(){
+		fetch("/api/test", {method: "GET"})
+			.then(result => result.text())
+			.then(data => document.getElementById("demo").innerHTML = data);
+	}
+	function f2(){
+		fetch("/api/test2", {method: "GET"})
+			.then(result => result.text())
+			.then(data => document.getElementById("demo").innerHTML = data);
+	}
+</script>
+</body>
+</html>
