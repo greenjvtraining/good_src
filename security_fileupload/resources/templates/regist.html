@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Insert title here</title>
+</head>
+
+<body>
+	<h1 th:text="${'Regist Page'}"></h1>
+	<hr>
+	<div>
+		<form name="frm_board">
+			<input type="text" name="title" placeholder="title"><br>
+			<input type="text" name="content" placeholder="content"><br>
+			<input type="file" name="imgfile"><br>
+			<input type="button" value="등록" onclick="formSubmit()">
+		</form>
+
+	</div>
+	<hr>
+	<div id="demo"><img src='' id="myImage"></div>
+	<script>
+		function formSubmit() {
+			alert('submit');
+			var form = document.forms['frm_board'];
+			var formData = new FormData(form);
+			const xhttp = new XMLHttpRequest();
+			xhttp.onload = function () {
+				var image = document.getElementById('myImage');
+    			image.src = '/images/' + this.responseText;
+				//document.getElementById("demo").innerHTML = this.responseText;
+			}
+			xhttp.open("POST", "/registProc");
+			//xhttp.setRequestHeader("Content-type", "multipart/form-data");
+			xhttp.send(formData);
+		}
+	</script>
+</body>
+
+</html>
