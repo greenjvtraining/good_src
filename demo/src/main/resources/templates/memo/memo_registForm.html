@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>등록 폼</h1>
+<hr>
+<form action="/memo/registProc" method="post" enctype="multipart/form-data">
+	<input type="text" name="title" placeholder="Input title...."><br>
+	<input type="text" name="content" placeholder="Input content...."><br>
+	<input type="text" name="writer" placeholder="Input id...."><br>
+	<input type="file" name="photo"><br>
+	<input type="submit" value="등록">
+</form>
+</body>
+</html>

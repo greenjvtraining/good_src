@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memo List Page</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+	<h1>Memo List</h1>
+	<hr>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>mno</th>
+                    <th>photo</th>
+                    <th>title</th>
+                    <th>content</th>
+                    <th>writer</th>
+                    <th>regdate</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="memo : ${list}">
+                    <td>[[${memo.mno}]]</td>
+                    <td><img th:src="@{/images/{filename}(filename=${memo.thumbnailFilename})}"></td>
+                    <td>[[${memo.title}]]</td>
+                    <td>[[${memo.content}]]</td>
+                    <td>[[${memo.member.username}]]</td>
+                    <td>[[${memo.regdate}]]</td>
+                </tr>
+               
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

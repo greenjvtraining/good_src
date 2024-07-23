@@ -1,0 +1,48 @@
+@charset "UTF-8";
+
+/* 기본 설정 */
+
+.table-container {
+    width: 80%;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+thead {
+    background-color: #f4f4f4;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* 반응형 설정 */
+@media (max-width: 768px) {
+    body {
+        align-items: flex-start;
+    }
+
+    .table-container {
+        width: 100%;
+        padding: 10px;
+    }
+
+    table {
+        width: 100%;
+    }
+
+    th, td {
+        padding: 10px 12px;
+    }
+}
