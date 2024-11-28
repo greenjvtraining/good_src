@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>파일 업로드</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">업로드</button>
+    </form>
+
+    <h2>업로드된 파일 목록</h2>
+    <ul>
+        <th:block th:each="file : ${files}">
+            <li th:text="${file}"></li>
+        </th:block>
+    </ul>
+</body>
+</html>
