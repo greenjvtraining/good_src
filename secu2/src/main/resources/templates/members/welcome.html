@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Member-welcome</h1>
+<p>[[${username}]]</p>
+<p>[[${name}]]</p>
+<p>[[${role}]]</p>
+<hr>
+
+<h1>Thymeleaf에서 Security 접근</h1>
+<p>Welcome, <span sec:authentication="name"></span>!</p>
+<p>Welcome, <span sec:authentication="principal.name"></span>!</p>
+<p>Welcome, <span sec:authentication="principal.role"></span>!</p>
+<hr>
+<h1>Principal 객체 값을 Model에 저장</h1>
+<p>Welcome2 <span>[[${username2}]]</span></p>
+<p>Welcome2 <span>[[${principal}]]</span></p>
+<hr>
+<h1>@AuthenticationPrincipal 사용</h1>
+<p>Welcome3 <span>[[${username3}]]</span></p>
+<p>Welcome3 <span>[[${name3}]]</span></p>
+<p>Welcome3 <span th:text="${role}"></span></p>
+
+</html>

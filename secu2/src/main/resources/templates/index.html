@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<link rel="stylesheet" href="/css/style.css" />
+<body>
+<h1>Index</h1>
+<hr>
+<a href="/regist">회원가입</a>
+<br>
+<a href="/kkk">없는 페이지</a>
+<br><br>
+<img th:src="@{/images/{filename}(filename=${filename})}" />
+<!--  img th:src="@{/images/{filename}(filename=${filename})}" /-->
+</body>
+</html>

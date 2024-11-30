@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>401 - Unauthorized</h1>
+<p>You do not have permission to access this resource.</p>
+<p style="color: blue;">[[${errorMessage}]]</p>
+<hr>
+<div th:if="${referer != null}">
+    <a th:href="${referer}">이전 페이지로 돌아가기</a>
+</div>
+<div th:unless="${referer != null}">
+    <a href="/">홈으로 돌아가기</a>
+</div>
+</body>
+</html>
