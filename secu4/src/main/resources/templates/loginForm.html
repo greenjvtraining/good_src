@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.orf">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Login Form</h1>
+<hr>
+<form action="/loginProc" method="post">
+	<input type="hidden" name="_csrf" th:value="${_csrf.token}" ><br>
+	<input type="text" name="username" ><br>
+	<input type="text" name="password" ><br>
+	<input type="checkbox" name="remember-me" >자동 로그인<br>
+	<input type="submit" value="로그인" >
+</form>
+</body>
+</html>
