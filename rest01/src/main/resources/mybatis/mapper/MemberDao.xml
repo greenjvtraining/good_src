@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.rest01.dao.IMemberDao">
+	<insert id="regMember">
+		INSERT INTO member (username, password, name, role) VALUES
+		(#{member.username}, #{member.password}, #{member.name}, #{member.role})
+	</insert>
+	
+	<select id="getMember" resultType="com.example.rest01.domain.Member">
+		SELECT * FROM memberㄷ WHERE username = #{username}
+	</select>
+	
+	<update id="updateMember" >
+		UPDATE member SET
+			password = #{member.password},
+			role = #{member.role}
+		WHERE 
+			username = #{member.username}
+	</update>
+	
+	<delete id="delMember">
+		DELETE FROM member WHERE username = #{username}
+	</delete>
+</mapper>
