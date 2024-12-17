@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Board List</h1>
+<hr>
+<table border="1">
+	<thead>
+		<tr>
+			<th>bno</th><th>title</th><th>writer</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr th:each="board : ${list}">
+			<td>[[${board.bno}]]</td>
+			<td>[[${board.title}]]</td>
+			<td>[[${board.writer}]]</td>
+		</tr>
+	</tbody>
+</table>
+</body>
+</html>
