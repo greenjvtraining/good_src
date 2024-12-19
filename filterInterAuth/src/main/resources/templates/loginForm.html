@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<h1>LoginForm</h1>
+	<hr>
+	<form id="frm">
+		<input type="text" name="username"><br> 
+		<input type="text" name="password"><br> 
+		<input type="submit" value="login">
+	</form>
+	<button onclick='go()'>Go</button>
+	<script>
+		const form = document.getElementById('frm');
+
+		form.addEventListener('submit', function(e) {
+			e.preventDefault(); // 폼의 기본 제출 방지
+			console.log("submit....");
+			const formData = new FormData(form); // 폼 데이터를 객체로 생성
+			const xhr = new XMLHttpRequest();
+			xhr.onload = function() {
+				if (xhr.status === 200) {
+					const headerValue = xhr.getResponseHeader('Authorize');
+					console.log(headerValue);
+					localStorage.setItem("token", headerValue);
+					alert('login successfully: ' + xhr.responseText);
+				} else {
+					alert('Error submitting form: ' + xhr.statusText);
+				}
+			};
+			xhr.open('POST', '/login2'); // 서버 엔드포인트 설정
+			xhr.send(formData); // 폼 데이터를 전송
+		});
+		
+		function go(){
+			const token = localStorage.getItem("token");
+			console.log("token : {}" , token);
+			
+			const xhr = new XMLHttpRequest();
+			xhr.onload = function() {
+				if (xhr.status === 200) {
+					alert('go successfully: ' + xhr.responseText);
+				} else {
+					alert('Error go : ' + xhr.statusText);
+				}
+			};
+			xhr.open('GET', '/secure/sec1'); // 서버 엔드포인트 설정
+			xhr.setRequestHeader("Authorize", token);
+			xhr.send(); 
+		}
+	</script>
+</body>
+</html>
