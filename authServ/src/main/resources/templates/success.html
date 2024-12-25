@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Success</h1>
+<hr>
+<button onclick="memberMain()">Member Page</button><br>
+<button onclick="adminMain()">Admin Page</button><br>
+
+<script>
+	function memberMain(){
+		const token = localStorage.getItem("token");
+		console.log("token : {}", token);
+		const xhr = new XMLHttpRequest();
+		
+		xhr.onload = function(){
+			const result = xhr.responseText;
+			if(result == "member main"){
+				window.location.href="/member/main";
+			}
+		};
+			
+		xhr.open("GET", "/member/main");
+		xhr.setRequestHeader("Authorization", "Bearer " + token);
+		xhr.send();
+		
+	}
+	
+	function adminMain(){
+		const token = localStorage.getItem("token");
+		alert("token : " + token);
+		const xhr = new XMLHttpRequest();
+		
+		xhr.onload = function(){
+			const result = xhr.responseText;
+			if(result == "admin main"){
+				window.location.href="/admin/main";
+			}
+		};
+			
+		xhr.open("GET", "/admin/main");
+		xhr.setRequestHeader("Authorization", "Bearer " + token);
+		xhr.send();
+	}
+</script>
+</body>
+</html>
