@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>BoardList Page</h1>
+<hr>
+<p><a href="/board/regBoardForm">게시글 등록</a></p>
+<table border="1">
+	<thead>
+		<tr>
+			<th>bno</th><th>title</th><th>writer</th><th>regdate</th><th>modifydate</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr th:each="board : ${boardList}">
+			<td>[[${board.bno}]]</td>
+			<td><a th:href="@{/board/{bno}(bno = ${board.bno})}">[[${board.title}]]</a></td>
+			<td>[[${board.writer.username}]]</td>
+			<td>[[${board.regdate}]]</td>
+			<td>[[${board.modifydate}]]</td>
+		</tr>
+	</tbody>
+</table>
+</body>
+</html>
