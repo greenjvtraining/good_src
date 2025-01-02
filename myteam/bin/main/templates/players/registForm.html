@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Player Regist Form</h1>
+<hr>
+<form action="/players/regist" method="post">
+	<input type="text" name="name" placeholder="Input player name..."><br>
+	<input type="text" name="pno" placeholder="Input Back Number..."><br>
+	<select name="position">
+		<option>--선택하세요--</option>
+		<option value="SHOOTING_GUARD">SHOOTING_GUARD</option>
+		<option value="POINT_GUARD">POINT_GUARD</option>
+		<option value="SMALL_FORWARD">SMALL_FORWARD</option>
+		<option value="POWER_FORWARD">POWER_FORWARD</option>
+		<option value="CENTER">CENTER</option>
+	</select><br>
+	<select name="team">
+		<option>--선택하세요--</option>
+		<option value="Chicago Bulls">Chicago Bulls</option>
+		<option value="Cleveland Cavaliers">Cleveland Cavaliers</option>
+		<option value="Indiana Pacers">Indiana Pacers</option>
+		<option value="Miami Heat">Miami Heat</option>
+		<option value="NewYork Knicks">NewYork Knicks</option>
+	</select><br>
+	<input type="submit" value="등록">
+</form>
+</body>
+</html>
