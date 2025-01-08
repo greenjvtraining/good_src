@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+	h2{
+		color: red;
+	}
+</style>
+</head>
+<body>
+<h1>Team Detail Page</h1>
+<hr>
+<p th:text="${team}"></p>
+<h2 th:text="${team.teamName}"></h2>
+<hr>
+<ol>
+	<li th:each="player : ${team.players}">[[${player.name}]]</li>
+</ol>
+</body>
+</html>

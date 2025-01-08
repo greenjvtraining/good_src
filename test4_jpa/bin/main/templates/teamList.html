@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Team List Page</h1>
+<hr>
+<table border="1">
+	<thead>
+		<tr>
+			<th>순번</th><th>팀아이디</th><th>팀이름</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr th:each="team, status : ${list}">
+			<td>[[${status.count}]]</td>
+			<td>[[${team.teamId}]]</td>
+			<td>[[${team.teamName}]]</td>
+		</tr>
+	</tbody>
+</table>
+</body>
+</html>
