@@ -1,0 +1,773 @@
+>> Springboot3 JPA 게시판 프로젝트에 SSE 기능을 적용하려고 해. 특정인의 게시물이 올라오면 알림이 오는 기능으로 사용할 거야. 사용자는 게시글 구독을 신청 및 해지 할 수 있어. SSE 기능을 학습하기에 적합한 코드를 보여줘.
+
+Spring Boot 3와 JPA를 이용해 게시판 프로젝트에 SSE(Server-Sent Events) 기능을 추가하려면 다음과 같은 구조를 사용할 수 있습니다. 게시물이 올라올 때 실시간으로 알림을 보내는 기능을 구현하기 위해서는 사용자 구독 관리, SSE를 통한 이벤트 전송, 그리고 게시물 업로드 시 알림 전송 로직을 작성해야 합니다.
+
+1. **SSE 엔드포인트 설정**  
+2. **사용자 구독 관리**  
+3. **게시물 업로드 시 알림 전송**
+
+### 1. Spring Boot 프로젝트에 필요한 의존성 추가
+먼저 `pom.xml`에 필요한 의존성을 추가합니다:
+
+```xml
+<dependencies>
+    <!-- Spring Boot Starter Web for REST APIs -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <!-- Spring Boot Starter Data JPA for database access -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <!-- H2 Database for simplicity (replace with your DB in production) -->
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    <!-- Spring Boot Starter for Thymeleaf (Optional, if you need templates) -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+</dependencies>
+```
+
+### 2. `Post` Entity와 `User` Entity 생성
+
+**Post 엔티티**:
+
+```java
+@Entity
+public class Post {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+    private String content;
+    private Long userId;  // 작성자의 userId
+
+    // Getters and Setters
+}
+```
+
+**User 엔티티**:
+
+```java
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String username;
+
+    // Getters and Setters
+}
+```
+
+### 3. 게시물 구독 정보 관리
+구독한 사용자의 정보를 관리하는 `Subscription` 엔티티를 생성합니다. 각 사용자가 특정 게시물에 대해 구독을 신청할 수 있습니다.
+
+```java
+@Entity
+public class Subscription {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private Long userId;   // 구독한 사용자 ID
+    private Long postId;   // 구독하는 게시물 ID
+
+    // Getters and Setters
+}
+```
+
+### 4. SSE Controller 생성
+
+**SSE Controller**는 서버에서 클라이언트로 데이터를 푸시하는 역할을 합니다. 사용자가 게시물에 대한 알림을 받을 수 있도록 SSE 엔드포인트를 작성합니다.
+
+```java
+@RestController
+@RequestMapping("/sse")
+public class SseController {
+
+    private final List<SseEmitter> emitters = new ArrayList<>();
+
+    // 구독을 위한 SSE 엔드포인트
+    @GetMapping("/subscribe")
+    public SseEmitter subscribe() {
+        SseEmitter emitter = new SseEmitter();
+        emitters.add(emitter);
+
+        emitter.onCompletion(() -> emitters.remove(emitter));
+        emitter.onError((ex) -> emitters.remove(emitter));
+
+        return emitter;
+    }
+
+    // 게시물 작성 시 알림 전송
+    public void sendPostNotification(Long postId) {
+        for (SseEmitter emitter : emitters) {
+            try {
+                emitter.send("새 게시물이 올라왔습니다! 게시물 ID: " + postId);
+            } catch (IOException e) {
+                emitter.completeWithError(e);
+            }
+        }
+    }
+}
+```
+
+위 코드에서 `subscribe()` 메서드는 SSE를 구독하려는 클라이언트에게 연결을 설정합니다. 그리고 `sendPostNotification()` 메서드는 새 게시물이 작성되었을 때 모든 구독자에게 알림을 전송합니다.
+
+### 5. 게시물 업로드 시 알림 전송
+
+게시물이 작성될 때마다 구독자에게 알림을 보내기 위해 게시물 저장 서비스에서 `sendPostNotification()` 메서드를 호출합니다.
+
+```java
+@Service
+public class PostService {
+
+    private final PostRepository postRepository;
+    private final SseController sseController;
+
+    @Autowired
+    public PostService(PostRepository postRepository, SseController sseController) {
+        this.postRepository = postRepository;
+        this.sseController = sseController;
+    }
+
+    // 게시물 저장 후 알림 전송
+    public Post createPost(Post post) {
+        Post savedPost = postRepository.save(post);
+        sseController.sendPostNotification(savedPost.getId());  // 알림 전송
+        return savedPost;
+    }
+}
+```
+
+### 6. 게시물 생성 API 구현
+
+게시물을 생성하는 REST API를 구현합니다. 사용자가 게시물을 작성하면, 게시물 생성 후 SSE를 통해 구독자들에게 알림이 전송됩니다.
+
+```java
+@RestController
+@RequestMapping("/posts")
+public class PostController {
+
+    private final PostService postService;
+
+    @Autowired
+    public PostController(PostService postService) {
+        this.postService = postService;
+    }
+
+    @PostMapping
+    public Post createPost(@RequestBody Post post) {
+        return postService.createPost(post);
+    }
+}
+```
+
+### 7. 클라이언트 측 SSE 처리 (JavaScript)
+
+클라이언트에서는 SSE를 구독하고, 서버에서 전송하는 메시지를 처리하는 JavaScript 코드가 필요합니다.
+
+```html
+<script>
+    const eventSource = new EventSource('/sse/subscribe');
+
+    eventSource.onmessage = function(event) {
+        alert('새 게시물 알림: ' + event.data);
+    };
+
+    eventSource.onerror = function(error) {
+        console.error('SSE Error:', error);
+    };
+</script>
+```
+
+이 코드에서는 `/sse/subscribe` 엔드포인트를 통해 서버에서 보낸 알림을 수신하고, 알림을 `alert`로 표시합니다.
+
+### 8. 구독 및 해지 기능 추가
+구독 신청 및 해지를 위해서는 `Subscription` 엔티티를 사용하여 사용자가 구독을 취소할 수 있도록 해야 합니다. 이를 위해서는 `SseController`에서 구독 관리 기능을 추가하고, 게시물 작성 시 알림을 전송할 대상 사용자만 필터링해서 알림을 전송할 수 있습니다.
+
+### 결론
+이렇게 SSE 기능을 활용하면 실시간으로 게시물 알림을 받을 수 있습니다. 이 코드는 기본적인 구현 예시로, 실제 서비스에서는 구독 관리, 예외 처리, 성능 최적화 등의 추가적인 고려가 필요합니다.
+----------------------------------------------------------------------------------
+
+>> 코드를 확 줄여서 sse 기능만을 확인해 볼 수 있는 초간단 코드를 보여줘
+
+
+SSE 기능을 간단하게 구현한 최소한의 예제를 보여드리겠습니다. 이 코드는 Spring Boot에서 SSE 기능만을 확인할 수 있도록 간단히 작성되었습니다. 데이터베이스나 게시물 관리 없이, 서버에서 특정 메시지를 클라이언트로 전송하는 형태입니다.
+
+### 1. `SseController` - SSE 엔드포인트 제공
+
+```java
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+@RestController
+public class SseController {
+
+    @GetMapping("/sse/subscribe")
+    public SseEmitter subscribe() {
+        SseEmitter emitter = new SseEmitter();
+
+        // 예시: 5초마다 메시지를 클라이언트로 전송
+        new Thread(() -> {
+            try {
+                for (int i = 1; i <= 5; i++) {
+                    Thread.sleep(5000);  // 5초마다 메시지 전송
+                    emitter.send("메시지 " + i);
+                }
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+        }).start();
+
+        return emitter;
+    }
+}
+```
+
+### 2. `application.properties`
+
+SSE 기능을 테스트하려면 별도의 설정은 필요 없지만, 기본적으로 포트를 설정할 수 있습니다. (기본 값은 `8080`)
+
+```properties
+server.port=8080
+```
+
+### 3. 클라이언트 측 JavaScript
+
+클라이언트에서 SSE를 구독하는 방법을 간단히 구현한 HTML 코드입니다.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE 예제</title>
+</head>
+<body>
+    <h1>SSE 실시간 메시지</h1>
+    <ul id="messages"></ul>
+
+    <script>
+        const eventSource = new EventSource('/sse/subscribe');
+
+        eventSource.onmessage = function(event) {
+            const messages = document.getElementById('messages');
+            const messageItem = document.createElement('li');
+            messageItem.textContent = event.data;
+            messages.appendChild(messageItem);
+        };
+
+        eventSource.onerror = function(error) {
+            console.error('SSE 오류:', error);
+            eventSource.close();
+        };
+    </script>
+</body>
+</html>
+```
+
+### 4. 실행 방법
+
+1. **서버 실행**: `SseController`가 포함된 Spring Boot 애플리케이션을 실행합니다.
+2. **브라우저에서 테스트**: `http://localhost:8080`에 접속하면, 클라이언트 측에서 5초마다 서버가 전송하는 메시지를 확인할 수 있습니다.
+
+### 동작 설명
+
+- **서버 측**: `SseController`에서 `/sse/subscribe` 엔드포인트를 통해 클라이언트와 연결됩니다. 이 연결은 5초마다 `메시지 1`, `메시지 2`와 같이 데이터를 전송합니다.
+- **클라이언트 측**: HTML 페이지에서 `EventSource` 객체를 사용해 `/sse/subscribe` 엔드포인트로 데이터를 실시간으로 받아옵니다. 데이터를 받을 때마다 `<ul>` 태그 안에 새로운 메시지가 추가됩니다.
+
+이 코드를 통해 SSE 기능을 간단하게 테스트할 수 있습니다. `SseEmitter`가 클라이언트에게 실시간으로 메시지를 보내는 방식으로 작동하며, 연결이 끝나면 `complete()` 메서드가 호출되어 연결이 종료됩니다.
+--------------------------------------------------------
+
+>> 순서가 js에서 EventSource객체가 생성되면서 endpoint로 요청을 하면, 컨트롤러에서 SseEmitter 객체가 생성되고 send( )를 통해 데이터를 전송하면 js에서 익명함수의 인수에 컨트롤러가 보낸 데이터가 할당되는거지?
+
+맞습니다! 당신이 설명한 대로 동작합니다. 순서대로 설명드리면 다음과 같습니다.
+
+### 1. **JavaScript에서 EventSource 객체 생성**
+
+클라이언트(브라우저)에서는 `EventSource` 객체를 생성하여 서버의 SSE 엔드포인트로 연결합니다. `EventSource` 객체는 서버로부터 실시간으로 데이터를 수신하는 기능을 제공합니다. 클라이언트 측 코드에서 `EventSource('/sse/subscribe')`가 호출되면, 클라이언트는 서버의 `/sse/subscribe` 엔드포인트로 연결을 시도하고, 서버가 데이터를 전송하기 시작하면 그 데이터를 실시간으로 받게 됩니다.
+
+```javascript
+const eventSource = new EventSource('/sse/subscribe');
+```
+
+### 2. **서버에서 SseEmitter 객체 생성**
+
+서버 측에서는 `SseEmitter` 객체를 사용하여 클라이언트로 실시간 데이터를 전송합니다. `SseEmitter`는 서버가 클라이언트로 이벤트를 보낼 수 있도록 해주는 객체입니다.
+
+클라이언트가 `/sse/subscribe`로 요청을 보내면, Spring Boot 컨트롤러에서 `SseEmitter` 객체를 생성하고, 클라이언트가 연결된 상태에서 데이터를 보내기 위해 `emitter.send()` 메서드를 사용합니다.
+
+```java
+@GetMapping("/sse/subscribe")
+public SseEmitter subscribe() {
+    SseEmitter emitter = new SseEmitter();
+
+    new Thread(() -> {
+        try {
+            for (int i = 1; i <= 5; i++) {
+                Thread.sleep(5000);  // 5초마다 메시지 전송
+                emitter.send("메시지 " + i);  // 클라이언트에게 메시지 전송
+            }
+            emitter.complete();  // 메시지 전송 완료 후 연결 종료
+        } catch (Exception e) {
+            emitter.completeWithError(e);  // 오류 발생 시 연결 종료
+        }
+    }).start();
+
+    return emitter;
+}
+```
+
+### 3. **클라이언트에서 데이터 수신**
+
+클라이언트 측에서는 `EventSource`의 `onmessage` 이벤트 핸들러를 사용하여 서버에서 보내는 데이터를 처리합니다. 서버가 데이터를 보낼 때마다 `onmessage` 함수가 호출되며, 그 안의 `event.data`에 서버에서 보낸 데이터가 할당됩니다. `event.data`에는 `SseEmitter.send()`에서 보낸 데이터가 담겨 있습니다.
+
+```javascript
+eventSource.onmessage = function(event) {
+    console.log("받은 데이터:", event.data);  // "메시지 1", "메시지 2"와 같이 출력됨
+    // 받은 메시지를 HTML에 추가하거나 처리할 수 있음
+};
+```
+
+### 4. **전체 흐름 요약**
+
+1. **클라이언트**: `EventSource('/sse/subscribe')`로 서버의 SSE 엔드포인트에 연결 요청을 보냅니다.
+2. **서버**: `/sse/subscribe`에서 `SseEmitter` 객체를 생성하고, 클라이언트와의 연결이 확립되면 `send()`를 통해 데이터를 전송합니다.
+3. **클라이언트**: 서버에서 보낸 데이터가 `onmessage` 핸들러의 `event.data`로 전달되며, 클라이언트는 이를 처리하거나 UI에 표시합니다.
+
+따라서 **순서대로 데이터 흐름은**:
+- 클라이언트 → 서버(`EventSource`로 요청)
+- 서버 → 클라이언트(`SseEmitter.send()`로 데이터 전송)
+- 클라이언트 → 서버(클라이언트가 수신한 데이터 처리)
+
+정리하자면, **클라이언트는 서버에 연결을 요청하고**, **서버는 클라이언트에게 데이터를 실시간으로 전송**하며, 클라이언트는 이 데이터를 `event.data`로 받아서 처리합니다.
+---------------------------------------------------------------------------------
+
+>> 관리자가 공지사항을 올리면 알림이 가는 구조를 위의 예제를 활용해서 구현한다면?
+
+관리자가 게시물이나 공지사항을 올리면, 그에 대한 알림을 구독 중인 사용자들에게 실시간으로 보내는 구조를 만들려면, 기본적인 SSE 로직에 게시물(공지사항)을 작성하고, 해당 게시물에 대해 알림을 보내는 로직을 추가해야 합니다.
+
+### 필요한 기능:
+1. **공지사항 작성**: 관리자가 공지사항을 작성할 수 있는 API.
+2. **구독 기능**: 사용자들이 공지사항 알림을 구독할 수 있는 기능.
+3. **공지사항 알림 전송**: 관리자가 공지사항을 작성하면 구독자들에게 알림을 보내는 기능.
+
+### 전체적인 흐름:
+1. **구독**: 사용자가 `/sse/subscribe`를 통해 SSE 연결을 통해 알림을 구독.
+2. **공지사항 작성**: 관리자가 공지사항을 작성하면, 이를 구독자들에게 알림으로 전송.
+
+### 1. **기본 구조 설정**
+
+우리는 기존의 SSE 예제에서 크게 변경할 부분은 없지만, **공지사항 작성**과 **구독 관리**를 추가해야 합니다.
+
+#### 1.1 `SseController` - 공지사항 알림 전송 기능
+
+```java
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+public class SseController {
+
+    // SSE 연결을 위한 Emitters (구독자 목록)
+    private final List<SseEmitter> emitters = new ArrayList<>();
+
+    // 공지사항을 구독하는 엔드포인트
+    @GetMapping("/sse/subscribe")
+    public SseEmitter subscribe() {
+        SseEmitter emitter = new SseEmitter();
+
+        // 클라이언트 연결 종료 시 emitter 목록에서 제거
+        emitter.onCompletion(() -> emitters.remove(emitter));
+        emitter.onError((ex) -> emitters.remove(emitter));
+
+        emitters.add(emitter);
+        return emitter;
+    }
+
+    // 공지사항 알림을 모든 구독자에게 전송하는 메서드
+    public void sendNotification(String message) {
+        for (SseEmitter emitter : emitters) {
+            try {
+                emitter.send(message);  // 구독자에게 공지사항 알림 전송
+            } catch (Exception e) {
+                emitter.completeWithError(e);  // 오류 발생 시 연결 종료
+            }
+        }
+    }
+
+    // 관리자가 공지사항을 올리는 API
+    @PostMapping("/post/notice")
+    public String postNotice(String message) {
+        sendNotification(message);  // 공지사항 작성 시 알림 전송
+        return "공지사항이 게시되었습니다.";
+    }
+}
+```
+
+#### 1.2 `application.properties`
+
+기본 설정을 그대로 사용하거나 필요한 경우 포트를 설정할 수 있습니다.
+
+```properties
+server.port=8080
+```
+
+### 2. **클라이언트 측 코드 (HTML + JavaScript)**
+
+클라이언트에서는 `/sse/subscribe` 엔드포인트를 통해 실시간 알림을 받게 됩니다. 구독자는 이 엔드포인트로 연결을 요청하고, 알림을 받을 준비를 합니다.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE 공지사항 알림</title>
+</head>
+<body>
+    <h1>공지사항 알림</h1>
+    <ul id="notifications"></ul>
+
+    <script>
+        // SSE 구독을 위한 EventSource 객체 생성
+        const eventSource = new EventSource('/sse/subscribe');
+
+        // 서버에서 보내는 메시지를 처리하는 부분
+        eventSource.onmessage = function(event) {
+            const notifications = document.getElementById('notifications');
+            const notificationItem = document.createElement('li');
+            notificationItem.textContent = event.data;
+            notifications.appendChild(notificationItem);
+        };
+
+        // 오류 처리
+        eventSource.onerror = function(error) {
+            console.error('SSE 오류:', error);
+            eventSource.close();
+        };
+    </script>
+</body>
+</html>
+```
+
+### 3. **서버에서 공지사항 작성 후 알림 전송**
+
+관리자가 공지사항을 작성하면, 해당 메시지가 구독한 모든 사용자에게 전송됩니다. 위 코드에서는 `/post/notice` 엔드포인트에 POST 요청을 보내면 관리자가 입력한 공지사항 메시지가 실시간으로 구독자에게 전송됩니다.
+
+### 예시:
+
+- **관리자가 공지사항 작성**:
+  - POST 요청: `POST http://localhost:8080/post/notice?message=새로운+공지사항+이+올라왔습니다.`
+  - 이 요청이 들어오면, `sendNotification()` 메서드가 실행되고, 구독 중인 모든 클라이언트에게 "새로운 공지사항이 올라왔습니다."라는 메시지가 실시간으로 전달됩니다.
+
+### 4. **전체 흐름**
+
+1. **구독**: 사용자는 `/sse/subscribe`를 통해 실시간으로 공지사항 알림을 구독합니다.
+2. **공지사항 작성**: 관리자가 `/post/notice`에 공지사항을 작성하면, `sendNotification()` 메서드가 실행되고, 구독 중인 모든 클라이언트에게 해당 메시지가 실시간으로 전송됩니다.
+3. **클라이언트 알림**: 클라이언트는 `onmessage` 이벤트 리스너를 통해 알림 메시지를 수신하고 화면에 표시합니다.
+
+### 5. **테스트**
+
+1. **서버 실행**: `SseController`가 포함된 Spring Boot 애플리케이션을 실행합니다.
+2. **구독**: 클라이언트에서 `http://localhost:8080`에 접속하여 실시간 알림을 구독합니다.
+3. **공지사항 작성**: 관리자는 `http://localhost:8080/post/notice?message=새로운+공지사항`와 같은 요청을 통해 공지사항을 작성합니다.
+4. **알림 수신**: 구독한 클라이언트는 실시간으로 새로운 공지사항을 받아 화면에 표시됩니다.
+
+이 구조를 통해 관리자가 공지사항을 올릴 때마다 실시간으로 알림을 받을 수 있게 됩니다.
+----------------------------------------------------------------------------------------------
+
+>> emitter.onCompletion(() -> emitters.remove(emitter)); 이 코드의 의미는?
+
+`emitter.onCompletion(() -> emitters.remove(emitter));` 이 코드는 **SSE 연결이 완료되었을 때**(즉, 클라이언트와의 연결이 종료되었을 때) 해당 `SseEmitter`를 `emitters` 목록에서 제거하는 역할을 합니다.
+
+### 구체적으로 살펴보면:
+
+1. **SseEmitter**:
+   - `SseEmitter`는 서버에서 클라이언트로 실시간 데이터를 전송할 수 있는 객체입니다.
+   - 서버에서 클라이언트로 데이터를 보내기 위해 `send()` 메서드를 사용합니다.
+   - 클라이언트와의 연결이 종료되면 `SseEmitter`는 `complete()` 또는 `completeWithError()` 메서드를 호출하여 연결을 종료할 수 있습니다.
+
+2. **`onCompletion()` 메서드**:
+   - `onCompletion()`은 **SseEmitter가 완료되었을 때** 실행될 콜백 함수를 설정하는 메서드입니다.
+   - 이 콜백 함수는 `SseEmitter`의 연결이 **완료되었을 때** 호출됩니다. 완료란 클라이언트가 연결을 끊었거나 `SseEmitter.complete()`가 호출되어 연결이 종료된 경우를 의미합니다.
+   
+3. **`emitters.remove(emitter)`**:
+   - `emitters`는 여러 `SseEmitter` 객체를 저장하는 **리스트**입니다. 이 리스트는 모든 구독자(SSE를 구독한 사용자)를 나타냅니다.
+   - `remove(emitter)`는 완료된 `SseEmitter`를 `emitters` 리스트에서 제거합니다. 이는 연결이 끊어진 구독자를 더 이상 추적할 필요가 없기 때문입니다.
+   - 이렇게 함으로써, `emitters` 리스트에는 현재 연결이 활성화된 구독자만 남게 됩니다. 연결이 종료된 구독자는 리스트에서 제거되므로 메모리 누수도 방지됩니다.
+
+### 전체적인 의미
+
+- `emitter.onCompletion(() -> emitters.remove(emitter));`는 `SseEmitter`의 연결이 종료되었을 때, 해당 `SseEmitter` 객체를 `emitters` 리스트에서 제거하는 콜백을 설정하는 코드입니다.
+- 이렇게 설정하면, 클라이언트가 연결을 끊었을 때 리스트에서 해당 클라이언트의 `SseEmitter` 객체를 제거하여, 불필요한 리소스를 차지하지 않도록 합니다.
+
+### 예시로 설명:
+
+- 클라이언트가 `/sse/subscribe`에 연결하면 `SseEmitter` 객체가 생성되어 `emitters` 리스트에 추가됩니다.
+- 클라이언트가 연결을 종료하면, `onCompletion()` 콜백이 실행되어 해당 `SseEmitter`가 `emitters` 리스트에서 제거됩니다.
+- 이를 통해, 서버는 더 이상 해당 클라이언트에게 메시지를 보내지 않으며, `emitters` 리스트는 항상 현재 활성화된 클라이언트만 추적하게 됩니다.
+
+따라서 이 코드는 **메모리 관리**와 **리소스 최적화**를 위해 중요한 역할을 합니다.
+--------------------------------------------------------------------------------------------
+
+>> 컨트롤러에 파라미터가 있을수도 없을수도 있을때는 어떻게 하지?
+
+컨트롤러에서 **파라미터가 있을 수도 없을 수도 있는 경우**에 대해 처리하려면, **`@RequestParam`**의 **`required` 속성**을 활용하거나, **`Optional`** 타입을 사용할 수 있습니다. 각각의 방법을 설명드리겠습니다.
+
+### 1. **`@RequestParam`에서 `required` 속성 사용하기**
+
+`@RequestParam`의 `required` 속성을 `false`로 설정하면, 해당 파라미터가 요청에 없을 때 **`null`** 값이 주어집니다.
+
+#### 예시: `@RequestParam`의 `required` 속성 사용
+
+```java
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class MyController {
+
+    @GetMapping("/example")
+    public String handleRequest(@RequestParam(name = "username", required = false) String username) {
+        if (username != null) {
+            // 파라미터가 있을 경우 처리
+            System.out.println("Username: " + username);
+        } else {
+            // 파라미터가 없을 경우 처리
+            System.out.println("No username provided");
+        }
+        return "response";
+    }
+}
+```
+
+### 설명:
+- `required = false`로 설정하면, 요청 파라미터 `username`이 없는 경우에도 오류가 발생하지 않고, `username` 변수는 `null`이 됩니다.
+- `username` 파라미터가 없을 때는 `else` 블록으로 처리할 수 있습니다.
+
+### 2. **`Optional` 사용하기**
+
+`Optional`을 사용하면, 파라미터가 있을 수도 있고 없을 수도 있는 경우를 더 명확하게 처리할 수 있습니다. `Optional`은 **값이 있을 수도 없을 수도 있음을 명시적으로 표현**할 수 있게 도와줍니다.
+
+#### 예시: `Optional`을 사용하여 파라미터 처리
+
+```java
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.stereotype.Controller;
+import java.util.Optional;
+
+@Controller
+public class MyController {
+
+    @GetMapping("/example")
+    public String handleRequest(@RequestParam(name = "username") Optional<String> username) {
+        if (username.isPresent()) {
+            // 파라미터가 있을 경우 처리
+            System.out.println("Username: " + username.get());
+        } else {
+            // 파라미터가 없을 경우 처리
+            System.out.println("No username provided");
+        }
+        return "response";
+    }
+}
+```
+
+### 설명:
+- `Optional<String> username`으로 선언하면, 해당 파라미터가 없을 경우 `username`은 `Optional.empty()`가 됩니다.
+- `username.isPresent()`로 값이 있는지 확인하고, 값이 있으면 `username.get()`으로 값을 가져올 수 있습니다. 값이 없으면 `else`로 처리할 수 있습니다.
+
+### 3. **`@RequestParam`에서 기본값 설정하기**
+
+또 다른 방법은 파라미터가 없을 경우 기본값을 설정하는 방법입니다. 이를 위해 `defaultValue` 속성을 사용할 수 있습니다.
+
+#### 예시: `defaultValue`를 사용한 기본값 설정
+
+```java
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class MyController {
+
+    @GetMapping("/example")
+    public String handleRequest(@RequestParam(name = "username", defaultValue = "guest") String username) {
+        // 파라미터가 있으면 해당 값, 없으면 기본값 "guest"
+        System.out.println("Username: " + username);
+        return "response";
+    }
+}
+```
+
+### 설명:
+- `@RequestParam(name = "username", defaultValue = "guest")`로 설정하면, `username` 파라미터가 없을 때 `"guest"`라는 기본값을 사용하게 됩니다.
+- 이 방법은 파라미터가 없을 때 기본값을 설정하고자 할 때 유용합니다.
+
+### 4. **세 가지 방법 비교**
+
+- **`required = false`**: 파라미터가 없을 때 `null` 값을 받으며, 파라미터가 없을 경우의 처리를 코드에서 명시적으로 해야 합니다.
+- **`Optional`**: 파라미터가 없을 때 `Optional.empty()`로 받을 수 있으며, 값이 존재하는지 여부를 `isPresent()`로 확인할 수 있습니다.
+- **`defaultValue`**: 파라미터가 없을 경우 기본값을 설정할 수 있습니다. 주로 기본값을 지정하려는 경우 유용합니다.
+
+### 결론
+
+컨트롤러에서 파라미터가 있을 수도 없을 수도 있을 때는 `@RequestParam`의 `required` 속성, `Optional`, 또는 `defaultValue`를 활용하여 유연하게 처리할 수 있습니다. 각 방법은 사용하려는 상황에 맞게 선택하면 됩니다.
+
+--------------------------------------------------------------------------------------------
+>> Redirect 할 때 attribute를 추가하려면?
+
+Spring에서 리다이렉트 시에 **attribute를 추가**하려면 **`RedirectAttributes`**를 사용할 수 있습니다. `RedirectAttributes`는 리다이렉트되는 URL에 **쿼리 파라미터**를 추가하거나, **플래시 속성**을 사용하여 리다이렉트된 후에도 일시적으로 세션에 데이터를 저장하고, 다음 요청에서 해당 데이터를 사용할 수 있게 합니다.
+
+### 1. **쿼리 파라미터를 추가하기**
+
+리다이렉트를 할 때 쿼리 파라미터를 URL에 추가하려면 `RedirectAttributes`를 사용하여 `addAttribute` 또는 `addFlashAttribute`를 활용합니다.
+
+#### 예시: 리다이렉트 시 쿼리 파라미터 추가
+
+```java
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+public class MyController {
+
+    @GetMapping("/redirectWithParam")
+    public String redirectWithParam(RedirectAttributes redirectAttributes) {
+        // 리다이렉트 시 쿼리 파라미터를 추가
+        redirectAttributes.addAttribute("message", "Hello, World!");
+        return "redirect:/redirectedPage";
+    }
+
+    @GetMapping("/redirectedPage")
+    public String redirectedPage(@RequestParam String message) {
+        System.out.println("Message from query param: " + message);
+        return "response";
+    }
+}
+```
+
+### 설명:
+- `addAttribute("message", "Hello, World!")`를 사용하여 `message` 파라미터를 URL에 쿼리 파라미터로 추가합니다.
+- `redirect:/redirectedPage`로 리다이렉트되며, URL은 `/redirectedPage?message=Hello, World!` 형태로 변환됩니다.
+- `@RequestParam String message`로 리다이렉트된 URL에서 쿼리 파라미터 `message`를 받아서 처리할 수 있습니다.
+
+### 2. **플래시 속성(Flash Attribute) 사용하기**
+
+쿼리 파라미터 외에도, **플래시 속성**을 사용하여 리다이렉트 후에도 데이터를 임시로 세션에 저장하여 접근할 수 있습니다. 이 방법은 URL에 파라미터를 추가하지 않고, 일시적인 세션 데이터를 사용하는 경우에 유용합니다.
+
+#### 예시: 플래시 속성 사용
+
+```java
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+public class MyController {
+
+    @GetMapping("/addFlash")
+    public String addFlash(RedirectAttributes redirectAttributes) {
+        // 리다이렉트 시 플래시 속성 추가
+        redirectAttributes.addFlashAttribute("flashMessage", "This is a flash message!");
+        return "redirect:/flashPage";
+    }
+
+    @GetMapping("/flashPage")
+    public String flashPage() {
+        // 플래시 속성에 접근 가능
+        return "response";
+    }
+}
+```
+
+### 설명:
+- `addFlashAttribute("flashMessage", "This is a flash message!")`는 리다이렉트된 페이지에서 잠시 세션에 저장될 데이터를 추가합니다.
+- 플래시 속성은 리다이렉트 후 한 번만 접근할 수 있으며, 그 이후에는 세션에서 제거됩니다.
+- 플래시 속성에 저장된 값은 **`session`**에 임시로 저장되어, 리다이렉트 후 새로운 요청에서 접근할 수 있습니다.
+
+#### Thymeleaf에서 플래시 속성 사용하기
+
+```html
+<!-- response.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Response Page</title>
+</head>
+<body>
+    <div th:if="${flashMessage != null}">
+        <p th:text="${flashMessage}"></p>
+    </div>
+</body>
+</html>
+```
+
+- `th:if="${flashMessage != null}"`로 플래시 속성 `flashMessage`가 존재하는 경우 이를 표시합니다.
+
+### 3. **쿼리 파라미터와 플래시 속성 함께 사용하기**
+
+리다이렉트할 때 **쿼리 파라미터와 플래시 속성을 동시에 사용할 수도 있습니다.**
+
+#### 예시: 쿼리 파라미터와 플래시 속성 함께 사용
+
+```java
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+public class MyController {
+
+    @GetMapping("/redirectWithBoth")
+    public String redirectWithBoth(RedirectAttributes redirectAttributes) {
+        // 쿼리 파라미터 추가
+        redirectAttributes.addAttribute("user", "JohnDoe");
+        
+        // 플래시 속성 추가
+        redirectAttributes.addFlashAttribute("flashMessage", "You are redirected with both query and flash message!");
+
+        return "redirect:/bothPage";
+    }
+
+    @GetMapping("/bothPage")
+    public String bothPage() {
+        return "response";
+    }
+}
+```
+
+### 설명:
+- `addAttribute`는 쿼리 파라미터를 URL에 추가하고,
+- `addFlashAttribute`는 플래시 속성을 세션에 저장하여 리다이렉트 후 한 번만 사용할 수 있게 합니다.
+- 이렇게 리다이렉트 후 URL은 `/bothPage?user=JohnDoe`와 같이 쿼리 파라미터를 포함하고, `flashMessage`는 세션에서 접근 가능합니다.
+
+### 4. **리다이렉트 시 속성 추가 요약**
+
+- **쿼리 파라미터 추가**: `redirectAttributes.addAttribute("param", value)`를 사용하여 리다이렉트 URL에 쿼리 파라미터를 추가할 수 있습니다.
+- **플래시 속성 추가**: `redirectAttributes.addFlashAttribute("param", value)`를 사용하여 세션에 일시적으로 데이터를 저장하고, 리다이렉트된 페이지에서 해당 데이터를 사용할 수 있습니다.
+
+### 결론
+
+리다이렉트할 때 **속성을 추가**하려면 `RedirectAttributes`를 사용하여 **쿼리 파라미터**나 **플래시 속성**을 추가할 수 있습니다. 쿼리 파라미터는 URL에 표시되며, 플래시 속성은 세션에 임시로 저장되어 리다이렉트된 페이지에서만 사용할 수 있습니다.
