@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" href="/css/style_error.css" >
+</head>
+<body>
+<form th:object="${member}">
+  <input type="text" th:field="*{username}" placeholder="Input username...." /><br>
+  <div class='error' th:errors="*{username}"></div>
+  <input type="text" th:field="*{password}" placeholder="Input password...." /><br>
+  <div class='error' th:errors="*{password}"></div>
+  <input type="text" th:field="*{name}" placeholder="Input name...." /><br>
+  <input type="text" th:field="*{phone}" placeholder="Input phone...." />
+  <div class='error' th:errors="*{phone}"></div>
+</form>
+
+</body>
+</html>
