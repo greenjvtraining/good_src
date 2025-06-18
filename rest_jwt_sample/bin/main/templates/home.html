@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+	<h1>Home</h1>
+	<hr>
+	<button onclick="callSecureApi1()">전용 페이지1</button>
+	<br>
+	<button onclick="callSecureApi2()">전용 페이지2</button>
+	<button onclick="logout()">로그아웃</button>
+
+	<script>
+	function callSecureApi1() {
+	  const accessToken = localStorage.getItem('accessToken');
+
+	  $.ajax({
+	    url: '/api/auth/secure1',
+	    type: 'GET',
+	    headers: {
+	      'Authorization': 'Bearer ' + accessToken
+	    },
+	    success: function (res) {
+	      alert('응답: ' + res);
+	    },
+	    error: function (xhr) {
+	      if (xhr.status === 401) {
+			console.log('secure1 - 401...');
+	        refreshToken(); // 액세스 토큰 만료 시 자동 갱신 시도
+	      } else {
+	        alert('인증 오류: ' + xhr.status);
+	      }
+	    }
+	  });
+	}
+	
+	function callSecureApi2() {
+		  const accessToken = localStorage.getItem('accessToken');
+
+		  $.ajax({
+		    url: '/api/auth/secure2',
+		    type: 'GET',
+		    headers: {
+		      'Authorization': 'Bearer ' + accessToken
+		    },
+		    success: function (res) {
+		      alert('응답: ' + res);
+		    },
+		    error: function (xhr) {
+		      if (xhr.status === 401) {
+		    	  console.log('secure2 - 401...');
+		        refreshToken(); // 액세스 토큰 만료 시 자동 갱신 시도
+		      } else {
+		        alert('인증 오류: ' + xhr.status);
+		      }
+		    }
+		  });
+		}
+	
+	function refreshToken() {
+		  const refreshToken = localStorage.getItem('refreshToken');
+
+		  $.ajax({
+		    url: '/api/refresh',
+		    type: 'POST',
+		    contentType: 'application/json',
+		    data: JSON.stringify({ refreshToken }),
+		    success: function (res) {
+		      localStorage.setItem('accessToken', res.accessToken);
+		      alert('토큰 갱신 완료');
+		      callSecureApi1(); // 다시 API 호출
+		    },
+		    error: function () {
+		      alert('세션 만료: 다시 로그인하세요.');
+		      location.href="/login";
+		      // 필요시 로그인 화면으로 리다이렉트
+		    }
+		  });
+		}
+	
+	function logout() {
+		  
+		  localStorage.removeItem('accessToken');
+		  localStorage.removeItem('refreshToken');
+		  alert('로그아웃 되었습니다.');
+		  // 로그인 페이지나 메인으로 리다이렉트
+		  window.location.href = '/login';
+		}
+
+</script>
+</body>
+</html>
