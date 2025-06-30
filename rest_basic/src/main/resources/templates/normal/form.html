@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Regist Form</h1>
+<hr>
+<form th:action="@{/normal/regist}" th:object="${requestDto}" method="post" enctype="multipart/form-data">
+	<input type="text" th:field="*{name}" placeholder="Input name..." >
+	<span th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span><br>
+	<input type="text" th:field="*{age}" placeholder="Input age...">
+	<span th:if="${#fields.hasErrors('age')}" th:errors="*{age}"></span><br>
+	<input type="text" th:field="*{msg}" placeholder="Input msg...">
+	<span th:if="${#fields.hasErrors('msg')}" th:errors="*{msg}"></span><br>
+	<input type="file" name="imagefile" th:field="*{imagefile}">
+	<span th:if="${#fields.hasErrors('imagefile')}" th:errors="*{imagefile}"></span><br>
+	
+	<input type="submit" value="Regist">
+</form>
+<hr>
+<form th:action="@{/normal/regist2}" method="post" enctype="multipart/form-data">
+	<input type="text" name="name" placeholder="Input name..." ><br>
+	<input type="text" name="age" placeholder="Input age..."><br>
+	<input type="text" name="msg" placeholder="Input msg..."><br>
+	<input type="file" name="imagefile" ><br>
+	
+	<input type="submit" value="Regist">
+</form>
+<hr>
+<form name="frm_user">
+	<input type="text" name="name" placeholder="Input name..." ><br>
+	<input type="text" name="age" placeholder="Input age..."><br>
+	<input type="text" name="msg" placeholder="Input msg..."><br>
+	<input type="file" name="imagefile" ><br>
+	
+	<input type="button" value="등록" onclick="formSubmit()">
+	<input type="button" value="등록2" onclick="formSubmit2()">
+</form>
+<div id="result">---</div>
+<script>
+	function formSubmit(){
+		var form = document.forms['frm_user'];
+		var formData = new FormData(form);
+		const xhr = new XMLHttpRequest();
+		xhr.onload = function(){
+			var result = document.getElementById('result');
+			result.innerHTML = xhr.responseText;
+			form.reset();
+		}
+		
+		xhr.open('POST', '/normal/regist3');
+		//xhr.setRequestHeader('Content-Type', 'multipart/form-data'); // FormData 사용시 생략.
+		xhr.send(formData);
+		
+	}
+	
+	function formSubmit2() {
+        var form = document.forms['frm_user'];
+        var formData = new FormData(form);
+        
+        fetch('/normal/regist3', {
+            method: 'POST',
+            body: formData
+            // headers are automatically set by Fetch API when using FormData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(data => {
+            document.getElementById('result').innerHTML = data;
+            form.reset();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('result').innerHTML = 'Error occurred';
+        });
+    }
+</script>
+</body>
+</html>

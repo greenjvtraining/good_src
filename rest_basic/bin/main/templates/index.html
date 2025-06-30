@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Index Page</h1>
+<hr>
+<form id="uploadForm">
+  <input type="text" name="name" placeholder="이름" required><br>
+  <input type="number" name="age" placeholder="나이" required><br>
+  <input type="text" name="msg" placeholder="메시지" required><br>
+  <input type="file" name="image" accept="image/*" required><br>
+  <button type="submit">업로드</button>
+</form>
+
+<script>
+document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+
+  try {
+    const response = await fetch("/api1/user/regist", {
+      method: "POST",
+      body: formData
+    });
+
+    const result = await response.json();
+    alert(result.message || "업로드 성공");
+  } catch (err) {
+    alert("업로드 실패: " + err);
+  }
+});
+</script>
+
+</body>
+</html>
