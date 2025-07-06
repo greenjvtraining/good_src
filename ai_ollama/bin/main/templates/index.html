@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Index Page</h1>
+<hr>
+<p>Input your question...!</p>
+<textarea id="message" name="message" cols=50 rows=5 placeholder="type your message.."></textarea>
+<button onclick="f()">Send</button>
+<hr>
+<div id="response"></div>
+<script>
+	function f(){
+		alert("send......");
+		const message = document.getElementById("message").value;
+		const div_res = document.getElementById("response");
+		
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function(){
+			if(xhr.readyState == 4 && xhr.status == 200){
+				div_res.innerHTML = xhr.responseText;
+			}else{
+				div_res.innerHTML = "<img src='/images/loading.gif' width='100' alt='waiting...'/>";
+			}
+		};
+		
+		xhr.open("GET", "/talk?message=" + message);
+		xhr.send();
+	}
+</script>
+</body>
+</html>

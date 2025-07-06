@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Detail Page</h1>
+<hr>
+<div id="request" th:if="${bbs != null and bbs.content != null}" th:text="${bbs.content}"></div>
+<hr>
+<div id="response" th:if="${bbs != null and bbs.reply != null}" th:text="${bbs.reply}"></div>
+
+<br><br>
+<a href="/bbs/list">목록보기</a>
+</body>
+</html>

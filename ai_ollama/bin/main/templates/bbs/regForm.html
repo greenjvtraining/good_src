@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+	#msg{
+		width: 300px;
+		height: 100px;
+		background-color: pink;
+	}
+</style>
+</head>
+<body>
+<h1>Bbs RegForm</h1>
+<hr>
+<th:block th:if="${error != null}">
+	<div id="msg" th:text="${error}"></div>
+</th:block>
+<form action="/bbs/reg" method="post">
+	<input type="text" name="title" placeholder="Input title..."><br>
+	<input type="text" name="content" placeholder="Input content..."><br>
+	<input type="text" name="writer" placeholder="Input writer...."><br>
+	<input type="submit" value="Regist">
+</form>
+</body>
+</html>
