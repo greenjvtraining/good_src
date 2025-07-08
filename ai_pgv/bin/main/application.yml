@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: ai_pgv
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/green427
+    username: green
+    password: green1234
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    open-in-view: false
