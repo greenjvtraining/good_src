@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>RAG 테스트 페이지</title>
+    <style>
+        body { font-family: Arial; margin: 2em; }
+        textarea { width: 100%; height: 100px; }
+        button { margin-top: 1em; padding: 10px 20px; }
+        #response { margin-top: 2em; white-space: pre-wrap; border: 1px solid #ccc; padding: 1em; }
+    </style>
+</head>
+<body>
+    <h2>📄 문서 업로드 (임베딩)</h2>
+    <form id="uploadForm">
+        <textarea id="docInput" placeholder="문서를 입력하세요..."></textarea><br>
+        <button type="submit">문서 업로드</button>
+    </form>
+
+    <h2>❓ 질문하기 (RAG)</h2>
+    <form id="askForm">
+        <textarea id="questionInput" placeholder="질문을 입력하세요..."></textarea><br>
+        <button type="submit">질문 보내기</button>
+    </form>
+
+    <h2>📋 저장된 문서 목록</h2>
+    <button onclick="loadDocs()">문서 불러오기</button>
+    <ul id="docList"></ul>
+
+    <h2>💬 응답 결과</h2>
+    <div id="response"></div>
+
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const content = document.getElementById("docInput").value;
+            fetch("/api/rag/upload", {
+                method: "POST",
+                headers: { "Content-Type": "text/plain; charset=UTF-8" },
+                body: content
+            })
+            .then(res => res.text())
+            .then(msg => document.getElementById("response").textContent = "✅ " + msg)
+            .catch(err => console.error(err));
+        });
+
+        document.getElementById("askForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const question = document.getElementById("questionInput").value;
+            fetch("/api/rag/ask", {
+                method: "POST",
+                headers: { "Content-Type": "text/plain; charset=UTF-8" },
+                body: question
+            })
+            .then(res => res.text())
+            .then(answer => document.getElementById("response").textContent = "💡 " + answer)
+            .catch(err => console.error(err));
+        });
+
+        function loadDocs() {
+            fetch("/api/rag/docs")
+                .then(res => res.json())
+                .then(data => {
+                	console.log(data);
+                    const ul = document.getElementById("docList");
+                    ul.innerHTML = "";
+                    data.documents.forEach(doc => {
+                        const li = document.createElement("li");
+                        li.textContent = doc.substring(0, 100) + "...";
+                        ul.appendChild(li);
+                    });
+                })
+                .catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>
