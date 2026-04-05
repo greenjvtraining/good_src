@@ -26,21 +26,21 @@ import jakarta.servlet.http.HttpServletRequest;
 @EnableWebSecurity
 public class SecurityConfig {
 
-	private final AuthenticationConfiguration authenticationConfiguration;
+	//private final AuthenticationConfiguration authenticationConfiguration;
 
 	private final JWTUtil jwtUtil;
 
-	public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil) {
-		this.authenticationConfiguration = authenticationConfiguration;
+	public SecurityConfig(JWTUtil jwtUtil) {
+		//this.authenticationConfiguration = authenticationConfiguration;
 		this.jwtUtil = jwtUtil;
 	}
-
+	/*
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
 
 		return configuration.getAuthenticationManager();
 	}
-
+	*/
 	@Bean
 	public BCryptPasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
@@ -48,7 +48,8 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
+		// 여기서 직접 authenticationManager 획득
+        AuthenticationManager authManager = authConfig.getAuthenticationManager();
 		
 		http.authorizeHttpRequests(
 				(auth) -> auth.requestMatchers("/", "/loginForm", "/login", "/joinProc").permitAll()
@@ -57,7 +58,7 @@ public class SecurityConfig {
 						.anyRequest().authenticated());
 
 		http.addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
-		http.addFilterAt(new LoginFilter(authenticationManager(), jwtUtil),
+		http.addFilterAt(new LoginFilter(authManager, jwtUtil),
 				UsernamePasswordAuthenticationFilter.class);
 		http.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
