@@ -28,6 +28,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{
 		System.out.println("LoginFilter 생성됨.....");
 		this.authenticationManager = authenticationManager;
 		this.jwtUtil = jwtUtil;
+		setFilterProcessesUrl("/loginProc"); // 여기서 로그인처리 패스 지정
 	}
 	
 	@Override
